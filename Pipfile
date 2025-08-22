@@ -14,6 +14,7 @@ langchain-ibm = "*"
 chromadb = "*"
 langchain-aws = "*"
 langchain-google-genai = "*"
+langchain-chroma = "*"
 
 [dev-packages]
 
