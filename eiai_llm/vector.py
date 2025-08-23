@@ -2,7 +2,6 @@ import os
 import re
 import uuid
 
-# from langchain_community.vectorstores import Chroma
 from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
@@ -13,8 +12,8 @@ chunk_size = 10000 if os.environ.get("EIAI_LLM_CHUNK_SIZE") is None else int(os.
 chunk_overlap = 200 if os.environ.get("EIAI_LLM_CHUNK_OVERLAP") is None else int(os.environ.get("EIAI_LLM_CHUNK_OVERLAP"))
 
 
-def create_vector_db_for_single_file(*, embeddings, persist_directory, file, embedding_model, collection_name, log):
-    vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+def create_vector_db_for_single_file(*, embeddings, persist_directory, file, collection_name, log):
+    vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     collection = vector_db.get()
     existing_ids = collection['ids']
     log.debug(f"exiting ids: {existing_ids}")
@@ -37,21 +36,18 @@ def create_vector_db_for_single_file(*, embeddings, persist_directory, file, emb
     ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in documents]
     seen_ids = set(existing_ids)
     unique_docs = [doc for doc, i_id in zip(documents, ids) if i_id not in seen_ids and (seen_ids.add(i_id) or True)]
-    # embeddings = OllamaEmbeddings(model=embedding_model)
     if len(unique_docs) > 0:
         unique_ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in unique_docs]
-        # Chroma.add_documents()
         Chroma.from_documents(documents=unique_docs, embedding=embeddings, ids=unique_ids, persist_directory=persist_directory, collection_name=collection_name)
-        # vector_db = Chroma.from_documents(documents=documents, embedding=embeddings, persist_directory=persist_directory, collection_name=collection_name)
-        vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+        vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
         collection = vector_db.get()
         log.info(f"now ids: {collection['ids']}")
     vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     return vector_db
 
 
-def create_vector_db_for_batch_files(*, embeddings, persist_directory, path, embedding_model, collection_name, log):
-    vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+def create_vector_db_for_batch_files(*, embeddings, persist_directory, path, collection_name, log):
+    vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     collection = vector_db.get()
     existing_ids = collection['ids']
     log.debug(f"exiting ids: {existing_ids}")
@@ -80,21 +76,18 @@ def create_vector_db_for_batch_files(*, embeddings, persist_directory, path, emb
     ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in documents]
     seen_ids = set(existing_ids)
     unique_docs = [doc for doc, i_id in zip(documents, ids) if i_id not in seen_ids and (seen_ids.add(i_id) or True)]
-    # embeddings = OllamaEmbeddings(model=embedding_model)
     if len(unique_docs) > 0:
         unique_ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in unique_docs]
-        # Chroma.add_documents()
         Chroma.from_documents(documents=unique_docs, embedding=embeddings, ids=unique_ids, persist_directory=persist_directory, collection_name=collection_name)
-        # vector_db = Chroma.from_documents(documents=documents, embedding=embeddings, persist_directory=persist_directory, collection_name=collection_name)
-        vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+        vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
         collection = vector_db.get()
         log.info(f"now ids: {collection['ids']}")
     vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     return vector_db
 
 
-def delete_vector_from_collection_for_batch(*, persist_directory, path, embedding_model, collection_name, log):
-    vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+def delete_vector_from_collection_for_batch(*, persist_directory, path, embeddings, collection_name, log):
+    vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     collection = vector_db.get()
     existing_ids = collection['ids']
     log.debug(f"exiting ids: {existing_ids}")
@@ -120,16 +113,11 @@ def delete_vector_from_collection_for_batch(*, persist_directory, path, embeddin
     log.info(f"lengh: {len(documents)}")
 
     ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in documents]
-    """
-    ids_diff_set = set(ids) - set(existing_ids)
-    if not ids_diff_set:
-        vector_db.delete(ids)
-    """
     vector_db.delete(ids)
 
 
-def delete_vector_from_collection_by_document(*, persist_directory, file, embedding_model, collection_name, log):
-    vector_db = Chroma(persist_directory=persist_directory, embedding_model=embedding_model, collection_name=collection_name)
+def delete_vector_from_collection_by_document(*, persist_directory, file, embeddings, collection_name, log):
+    vector_db = Chroma(persist_directory=persist_directory, embedding_function=embeddings, collection_name=collection_name)
     collection = vector_db.get()
     existing_ids = collection['ids']
     log.debug(f"exiting ids: {existing_ids}")
@@ -200,7 +188,6 @@ def create_vector_store_for_batch_files(*, embeddings, path, log):
     log.info(f"length: {len(documents)}")
 
     vector_store = Chroma.from_documents(documents, embeddings)
-    # vector_store = DocArrayInMemorySearch.from_documents(documents, embeddings)
     return vector_store
 
 

@@ -54,7 +54,7 @@ class PredefinedPromptTemplate:
         return template
 
 
-def run(*, llm, question, vector_store, prompt_template_type, prompt_template, question_version_number, chat_prompt_template_type, chat_prompt_template, predefined_chat_template_type, log) -> (bool, str):
+def run(*, llm, question, vector_store, prompt_template_type, prompt_template, question_version_number, chat_prompt_template_type, chat_prompt_template, predefined_chat_template_type, log):
     log.info(f"prompt_template_type: {prompt_template_type}")
     match prompt_template_type:
         case "pre_defined":
